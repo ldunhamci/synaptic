@@ -33,5 +33,5 @@ meta.tag("rainbow", node_b)
 
 # -- We can now retieve node_b from the metadata
 # -- using the tag
-print(f"Rainbow Node : {meta.find_first('rainbow')}")
+print("Rainbow Node : {}".format(meta.find_first('rainbow')))
 ```

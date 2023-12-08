@@ -18,7 +18,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 import json
-import typing
 import maya.cmds as mc
 
 from . import pointer
@@ -62,7 +61,8 @@ class Metadata:
     _TAG_PREFIX = "usertag"
 
     # ----------------------------------------------------------------------------------
-    def __init__(self, node: str):
+    def __init__(self, node):
+        # type: (str) -> None
 
         # -- Store a pointer to the object. This way we can always retrieve
         # -- it regardless of name changes
@@ -78,7 +78,7 @@ class Metadata:
 
     # ----------------------------------------------------------------------------------
     @classmethod
-    def get_metanode(cls, host: str) -> str:
+    def get_metanode(cls, host):
         """
         This function allows for the metanode name to be returned for the given
         host node.
@@ -92,7 +92,7 @@ class Metadata:
         # -- Get a list of all the message connections. This is because when
         # -- a meta node is created it ties itself to the message attribute
         # -- of the node it represents
-        connections = mc.listConnections(f"{host}.message")
+        connections = mc.listConnections("{}.message".format(host))
 
         # -- If there is no connection then there is nothing
         # -- more we can do
@@ -103,7 +103,7 @@ class Metadata:
         # -- for the plug data, as we only want to find one that has a host
         # -- connection
         connection_info = mc.listConnections(
-            f"{host}.message",
+            "{}.message".format(host),
             source=False,
             destination=True,
             connections=True,
@@ -131,7 +131,7 @@ class Metadata:
 
     # ----------------------------------------------------------------------------------
     @classmethod
-    def create(cls, host_node: str) -> "Metadata":
+    def create(cls, host_node):
         """
         This will create a metanode to represeent the given host node
 
@@ -162,8 +162,8 @@ class Metadata:
             at="message",
         )
         mc.connectAttr(
-            f"{host_node}.message",
-            f"{meta_node}.{_Attributes.HOST}"
+            "{}.message".format(host_node),
+            "{}.{}".format(meta_node, _Attributes.HOST)
         )
 
         # -- This attribute is used to store data which cannot be changed
@@ -174,7 +174,7 @@ class Metadata:
             dt="string",
         )
         mc.setAttr(
-            f"{meta_node}.{_Attributes.PERSISTENT_DATA}",
+            "{}.{}".format(meta_node, _Attributes.PERSISTENT_DATA),
             "{}",
             type="string",
         )
@@ -187,7 +187,7 @@ class Metadata:
             dt="string",
         )
         mc.setAttr(
-            f"{meta_node}.{_Attributes.TRANSIENT_DATA}",
+            "{}.{}".format(meta_node, _Attributes.TRANSIENT_DATA),
             "{}",
             type="string",
         )
@@ -195,16 +195,16 @@ class Metadata:
         return Metadata(host_node)
 
     # ----------------------------------------------------------------------------------
-    def set(self, label: str, value: typing.Any) -> None:
+    def set(self, label, value):
         """
         This allows you to store a piece of information in the metadata as a key
         value pair. Note that the value (and the key) must be json serialisable.
         
         Args:
-            label: A label to store the data against. It is this label you can
+            label: (str) A label to store the data against. It is this label you can
                 later use to retrieve the value
                 
-            value: The value you want to store in the metadata.  
+            value: (typing.Any) The value you want to store in the metadata.
 
         Returns:
             None
@@ -230,7 +230,7 @@ class Metadata:
         try:
             current_data = json.loads(
                 mc.getAttr(
-                    f"{meta_name}.{attr}",
+                    "{}.{}".format(meta_name, attr),
                 ),
             )
 
@@ -242,21 +242,21 @@ class Metadata:
 
         # -- Apply the data back onto the attribute
         mc.setAttr(
-            f"{meta_name}.{attr}",
+            "{}.{}".format(meta_name, attr),
             json.dumps(current_data),
             type="string",
         )
 
     # ----------------------------------------------------------------------------------
-    def get(self, label: str) -> typing.Any:
+    def get(self, label):
         """
         This will retrieve the value stored against the given label. If the label
         is not found within the metadata node then None will be returned.
         Args:
-            label: 
+            label : (str)
 
         Returns:
-
+            typing.Any
         """
         # -- Get the name of the meta node
         meta_name = pointer.get_name(self._meta_pointer)
@@ -265,7 +265,7 @@ class Metadata:
         try:
             all_data = json.loads(
                 mc.getAttr(
-                    f"{meta_name}.{_Attributes.PERSISTENT_DATA}",
+                    "{}.{}".format(meta_name, _Attributes.PERSISTENT_DATA),
                 ),
             )
         except json.JSONDecodeError:
@@ -277,7 +277,7 @@ class Metadata:
         try:
             all_data.update(
                 mc.getAttr(
-                    f"{meta_name}.{_Attributes.TRANSIENT_DATA}",
+                    "{}.{}".format(meta_name, _Attributes.TRANSIENT_DATA),
                 ),
             )
 
@@ -289,7 +289,7 @@ class Metadata:
         return all_data.get(label, None)
 
     # ----------------------------------------------------------------------------------
-    def tag(self, tag_name: str, target: str) -> None:
+    def tag(self, tag_name, target):
         """
         This allows you to tag another node in the scene graph. This allows you to 
         retireve that node using a tag name rather than the actual objects name. 
@@ -299,10 +299,10 @@ class Metadata:
         you're no longer relying purely on the names.
         
         Args:
-            tag_name:  The name to store the tag as. This can be thought of as a 
+            tag_name: (str) The name to store the tag as. This can be thought of as a
                 dictionary key.
                 
-            target: The name of the node you want to store a connection tag to
+            target: (str) The name of the node you want to store a connection tag to
             
         Returns:
             None
@@ -312,7 +312,7 @@ class Metadata:
         meta_name = pointer.get_name(self._meta_pointer)
 
         # -- Add the attribute
-        if not mc.objExists(f"{meta_name}.{tag_name}"):
+        if not mc.objExists("{}.{}".format(meta_name, tag_name)):
             mc.addAttr(
                 meta_name,
                 shortName=tag_name,
@@ -322,7 +322,7 @@ class Metadata:
 
         try:
             next_index = mc.getAttr(
-                f"{meta_name}.{tag_name}",
+                "{}.{}".format(meta_name, tag_name),
                 multiIndices=True,
             )[-1] + 1
 
@@ -330,20 +330,20 @@ class Metadata:
             next_index = 0
 
         mc.connectAttr(
-            f"{target}.message",
-            f"{meta_name}.{tag_name}[{next_index}]",
+            "{}.message".format(target),
+            "{}.{}[{}]".format(meta_name, tag_name, next_index),
             force=True,
         )
 
     # ----------------------------------------------------------------------------------
-    def untag(self, tag_name: str, target: str):
+    def untag(self, tag_name, target):
         """
         THis will remove a tag from the metadata. If that tag does not exist then 
         no action will occur.
         
         Args:
-            tag_name: Name of tag to remove
-            target: Name of node to remove tag from
+            tag_name: (str) Name of tag to remove
+            target: (str) Name of node to remove tag from
 
         Returns:
             None
@@ -356,11 +356,11 @@ class Metadata:
 
         # -- Add the attribute does not exist, we have no nodes
         # -- to collate
-        if not mc.objExists(f"{meta_name}.{tag_name}"):
+        if not mc.objExists("{}.{}".format(meta_name, tag_name)):
             return
 
         connection_info = mc.listConnections(
-            f"{meta_name}.{tag_name}",
+            "{}.{}".format(meta_name, tag_name),
             source=True,
             destination=False,
             connections=True,
@@ -381,7 +381,7 @@ class Metadata:
                 )
 
     # ----------------------------------------------------------------------------------
-    def find(self, tag_name: str) -> typing.List[str]:
+    def find(self, tag_name):
         """
         This will find all the nodes tagged to this metadata with the given tag name
         
@@ -399,13 +399,13 @@ class Metadata:
 
         # -- Add the attribute does not exist, we have no nodes
         # -- to collate
-        if not mc.objExists(f"{meta_name}.{tag_name}"):
+        if not mc.objExists("{}.{}".format(meta_name, tag_name)):
             return list()
 
         return list(
             set(
                 mc.listConnections(
-                    f"{meta_name}.{tag_name}",
+                    "{}.{}".format(meta_name, tag_name),
                     source=True,
                     destination=False,
                 ) or list(),
@@ -431,7 +431,7 @@ class Metadata:
         return None
 
     # ----------------------------------------------------------------------------------
-    def node(self) -> str:
+    def node(self):
         """
         This will return the node name of the actual metadata node
         
@@ -463,13 +463,13 @@ class _Attributes:
 
 
 # --------------------------------------------------------------------------------------
-def has_meta(node: str) -> bool:
+def has_meta(node):
     """
     This is a convenience function which returns True or False as to whether the
     given node has a metadata node connected to it
 
     Args:
-        node: Name of node to query
+        node: (str) Name of node to query
 
     Returns:
         bool: True if the  given node has metadata
@@ -478,14 +478,14 @@ def has_meta(node: str) -> bool:
 
 
 # --------------------------------------------------------------------------------------
-def get(node: str) -> Metadata:
+def get(node):
     """
     This is a convenience function for returning a Metadata class instance for the
     given node providing the node has metadata. If it does not then None will be
     returned.
 
     Args:
-        node: Name of node to attmept to get the Metadata class instance for
+        node: (str) Name of node to attmept to get the Metadata class instance for
 
     Returns:
         Metadata
@@ -497,13 +497,13 @@ def get(node: str) -> Metadata:
 
 
 # --------------------------------------------------------------------------------------
-def create(node: str) -> Metadata:
+def create(node):
     """
     This will create a metadatanode for the given node providing it does not already
     have one.
 
     Args:
-        node: Name of the node to create the metadata for
+        node: (str) Name of the node to create the metadata for
 
     Returns:
         Metadata instance

@@ -5,13 +5,13 @@ import maya.api.OpenMaya as om
 
 
 # --------------------------------------------------------------------------------------
-def get_pointer(node_name: str) -> om.MObject:
+def get_pointer(node_name):
     """
     Given the name of a node, this will return the MObject representation. This means
     we can track the node easily without having to worry about name changes.
 
     Args:
-        node_name: Name of the node to get a pointer to
+        node_name: (str) Name of the node to get a pointer to
 
     Returns:
         MObject reference
@@ -23,7 +23,7 @@ def get_pointer(node_name: str) -> om.MObject:
         return selection_list.getDependNode(0)
 
     except RuntimeError:
-        raise RuntimeError(f"Could not find node {node_name}")
+        raise RuntimeError("Could not find node {}".format(node_name))
 
 
 # --------------------------------------------------------------------------------------
