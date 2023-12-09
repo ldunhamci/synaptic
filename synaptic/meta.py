@@ -234,7 +234,7 @@ class Metadata:
                 ),
             )
 
-        except json.JSONDecodeError:
+        except ValueError:
             current_data = dict()
 
         # -- Add in our value
@@ -268,7 +268,7 @@ class Metadata:
                     "{}.{}".format(meta_name, _Attributes.PERSISTENT_DATA),
                 ),
             )
-        except json.JSONDecodeError:
+        except ValueError:
             all_data = dict()
 
         # -- Now compound that with the data from the transient. Note that we
@@ -281,7 +281,7 @@ class Metadata:
                 ),
             )
 
-        except (json.JSONDecodeError, ValueError):
+        except ValueError:
             pass
 
         # -- Return the value with the given label. If the label is not
